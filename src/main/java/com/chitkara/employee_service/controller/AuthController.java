@@ -24,22 +24,38 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public User register(@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+    public ResponseEntity<?> register(@RequestBody User user) {
+        try {
+            // Check if user already exists
+            if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+                return ResponseEntity.badRequest().body("User already exists");
+            }
+
+            // Encrypt password and save user
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            userRepository.save(user);
+
+            return ResponseEntity.ok("User registered successfully: " + user.getUsername());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
+        }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest request) {
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        try {
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                return ResponseEntity.status(401).body("Invalid credentials");
+            }
+
+            String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+
+            return ResponseEntity.ok(new JwtResponse(token, user.getUsername(), user.getRole()));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Authentication failed: " + e.getMessage());
         }
-
-        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
-
-        return ResponseEntity.ok(new JwtResponse(token, user.getUsername(), user.getRole()));
     }
 }

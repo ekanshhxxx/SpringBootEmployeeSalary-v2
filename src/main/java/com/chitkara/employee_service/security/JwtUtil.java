@@ -11,7 +11,10 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    private final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    // ✅ FIXED: Longer secret key (at least 64 characters for HS512)
+    private final SecretKey key = Keys.hmacShaKeyFor(
+            "MyVerySecureJwtSecretKeyForEmployeePayrollSystem1234567890123456789012345678901234567890".getBytes()
+    );
     private final int expiration = 86400000; // 24 hours
 
     public String generateToken(String username, String role) {
