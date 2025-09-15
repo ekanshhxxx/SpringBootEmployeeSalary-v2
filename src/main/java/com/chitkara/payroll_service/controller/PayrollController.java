@@ -4,6 +4,7 @@ import com.chitkara.payroll_service.dto.PayrollSummary;
 import com.chitkara.payroll_service.entity.PayrollRun;
 import com.chitkara.payroll_service.service.PayrollService;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest; // ✅ ADD THIS IMPORT
 
 import java.time.LocalDate;
 import java.util.List;
@@ -19,14 +20,21 @@ public class PayrollController {
     }
 
     @PostMapping("/generate/{empId}")
-    public PayrollRun generatePayroll(@PathVariable Long empId, @RequestParam String month){
-        return payrollService.generatePayroll(empId, LocalDate.parse(month + "-01"));
+    public PayrollRun generatePayroll(@PathVariable Long empId,
+                                      @RequestParam String month,
+                                      HttpServletRequest request) { // ✅ ADD REQUEST PARAMETER
+
+        // ✅ EXTRACT JWT TOKEN FROM HEADER
+        String authHeader = request.getHeader("Authorization");
+
+        return payrollService.generatePayroll(empId, LocalDate.parse(month + "-01"), authHeader);
     }
 
     @GetMapping("/{empId}")
     public List<PayrollRun> getPayroll(@PathVariable Long empId){
         return payrollService.getPayrollByEmployee(empId);
     }
+
     @GetMapping("/report/{month}")
     public PayrollSummary getMonthlyReport(@PathVariable String month) {
         LocalDate monthDate = LocalDate.parse(month + "-01");

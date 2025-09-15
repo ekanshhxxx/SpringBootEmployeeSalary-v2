@@ -10,13 +10,15 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class EmployeeServiceClient {
 
     @Autowired
-    @Qualifier("employeeWebClient") // Use the renamed bean
+    @Qualifier("employeeWebClient")
     private WebClient employeeWebClient;
 
-    public EmployeeDto getEmployeeById(Long employeeId) {
+    // ✅ ADD JWT TOKEN PARAMETER
+    public EmployeeDto getEmployeeById(Long employeeId, String authHeader) {
         return employeeWebClient
                 .get()
                 .uri("/api/employees/{id}", employeeId)
+                .header("Authorization", authHeader) // ✅ PASS JWT TOKEN
                 .retrieve()
                 .bodyToMono(EmployeeDto.class)
                 .block();
